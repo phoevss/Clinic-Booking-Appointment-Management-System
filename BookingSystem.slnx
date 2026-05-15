@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BookingCore/BookingCore.csproj" />
+  <Project Path="BookingData/BookingData.csproj" />
+  <Project Path="FrontDeskApp/FrontDeskApp.csproj" />
+  <Project Path="UserApp/UserApp.csproj" />
+</Solution>
