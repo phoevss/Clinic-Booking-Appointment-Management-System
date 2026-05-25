@@ -10,7 +10,9 @@ namespace UserApp.Forms
 {
     public partial class LoginForm : Form
     {
+        private readonly BookingDbContext _context;
         private readonly IAuthService _authService;
+        private Panel cardPanel;
         private TextBox txtUsername;
         private TextBox txtPassword;
         private Button btnLogin;
@@ -18,80 +20,127 @@ namespace UserApp.Forms
 
         public LoginForm()
         {
-            // Initialize dependencies (In a real app, use DI)
-            var context = new BookingDbContext();
-            _authService = new AuthService(context);
-            
+            _context = new BookingDbContext();
+            _authService = new AuthService(_context);
             InitializeComponent();
-            ApplyStyles();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _context?.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
-            this.txtUsername = new TextBox();
-            this.txtPassword = new TextBox();
-            this.btnLogin = new Button();
-            this.lnkRegister = new LinkLabel();
-            
-            this.SuspendLayout();
-            
-            // txtUsername
-            this.txtUsername.Location = new Point(50, 80);
-            this.txtUsername.Size = new Size(200, 25);
-            this.txtUsername.PlaceholderText = "Username";
-            
-            // txtPassword
-            this.txtPassword.Location = new Point(50, 120);
-            this.txtPassword.Size = new Size(200, 25);
-            this.txtPassword.PasswordChar = '*';
-            this.txtPassword.PlaceholderText = "Password";
-            
-            // btnLogin
-            this.btnLogin.Location = new Point(50, 160);
-            this.btnLogin.Size = new Size(200, 40);
-            this.btnLogin.Text = "LOGIN";
-            this.btnLogin.Click += new EventHandler(this.btnLogin_Click);
-            
-            // lnkRegister
-            this.lnkRegister.Location = new Point(50, 210);
-            this.lnkRegister.Size = new Size(200, 20);
-            this.lnkRegister.Text = "Don't have an account? Register";
-            this.lnkRegister.TextAlign = ContentAlignment.MiddleCenter;
-            this.lnkRegister.Click += new EventHandler(this.lnkRegister_Click);
-
-            // LoginForm
-            this.ClientSize = new Size(300, 300);
-            this.Controls.Add(this.txtUsername);
-            this.Controls.Add(this.txtPassword);
-            this.Controls.Add(this.btnLogin);
-            this.Controls.Add(this.lnkRegister);
+            this.BackColor = UIHelper.BodyBg;
+            this.ClientSize = new Size(420, 520);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "Appointment System - Login";
-            this.ResumeLayout(false);
-            this.PerformLayout();
-        }
+            this.Text = "Clinic Portal - Patient Login";
+            this.MaximizeBox = false;
 
-        private void ApplyStyles()
-        {
-            this.BackColor = Color.FromArgb(30, 30, 30);
-            UIHelper.SetGradientBackground(this, Color.FromArgb(45, 45, 45), Color.FromArgb(20, 20, 20));
-            
-            btnLogin.BackColor = Color.FromArgb(0, 120, 215);
-            btnLogin.ForeColor = Color.White;
-            btnLogin.FlatStyle = FlatStyle.Flat;
-            btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            
-            txtUsername.BackColor = Color.FromArgb(50, 50, 50);
-            txtUsername.ForeColor = Color.White;
-            txtUsername.BorderStyle = BorderStyle.FixedSingle;
-            
-            txtPassword.BackColor = Color.FromArgb(50, 50, 50);
-            txtPassword.ForeColor = Color.White;
-            txtPassword.BorderStyle = BorderStyle.FixedSingle;
-            
-            lnkRegister.LinkColor = Color.FromArgb(0, 190, 255);
+            // Header bar
+            Panel headerBar = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 80,
+                BackColor = UIHelper.Teal
+            };
+            Label clinicName = new Label
+            {
+                Text = "✦ Patient Portal",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            headerBar.Controls.Add(clinicName);
+
+            // Card panel
+            cardPanel = new Panel
+            {
+                Size = new Size(340, 340),
+                Location = new Point((this.ClientSize.Width - 340) / 2, 110),
+                BackColor = UIHelper.CardBg
+            };
+            UIHelper.MakeRounded(cardPanel, 8);
+            UIHelper.ApplyCardStyle(cardPanel);
+
+            Label lblSub = new Label
+            {
+                Text = "Patient Sign In",
+                ForeColor = UIHelper.Charcoal,
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                Location = new Point(30, 20),
+                Size = new Size(280, 40)
+            };
+            cardPanel.Controls.Add(lblSub);
+
+            Label lblHint = new Label
+            {
+                Text = "Enter your credentials to book appointments",
+                ForeColor = UIHelper.TextGray,
+                Font = new Font("Segoe UI", 9),
+                Location = new Point(30, 55),
+                Size = new Size(280, 20)
+            };
+            cardPanel.Controls.Add(lblHint);
+
+            // Username
+            Label lblUser = UIHelper.MakeLabel("Username");
+            lblUser.Location = new Point(30, 90);
+            cardPanel.Controls.Add(lblUser);
+
+            txtUsername = new TextBox
+            {
+                Location = new Point(30, 110),
+                Size = new Size(280, 30),
+                PlaceholderText = "Enter your username"
+            };
+            UIHelper.ApplyInputStyle(txtUsername);
+            cardPanel.Controls.Add(txtUsername);
+
+            // Password
+            Label lblPass = UIHelper.MakeLabel("Password");
+            lblPass.Location = new Point(30, 155);
+            cardPanel.Controls.Add(lblPass);
+
+            txtPassword = new TextBox
+            {
+                Location = new Point(30, 175),
+                Size = new Size(280, 30),
+                PasswordChar = '*',
+                PlaceholderText = "••••••"
+            };
+            UIHelper.ApplyInputStyle(txtPassword);
+            cardPanel.Controls.Add(txtPassword);
+
+            // Login button
+            btnLogin = new Button { Text = "SIGN IN", Location = new Point(30, 225), Size = new Size(280, 45) };
+            UIHelper.ApplyPrimaryBtn(btnLogin);
+            btnLogin.Click += btnLogin_Click;
+            cardPanel.Controls.Add(btnLogin);
+
+            // Register link
+            lnkRegister = new LinkLabel
+            {
+                Location = new Point(30, 285),
+                Size = new Size(280, 25),
+                Text = "Don't have an account? Register",
+                TextAlign = ContentAlignment.MiddleCenter,
+                LinkColor = UIHelper.Teal,
+                ActiveLinkColor = UIHelper.TealDark,
+                Font = new Font("Segoe UI", 9)
+            };
+            lnkRegister.Click += lnkRegister_Click;
+            cardPanel.Controls.Add(lnkRegister);
+
+            this.Controls.Add(cardPanel);
+            this.Controls.Add(headerBar);
         }
 
         private async void btnLogin_Click(object sender, EventArgs e)
@@ -105,26 +154,36 @@ namespace UserApp.Forms
                 return;
             }
 
-            var loggedInUser = await _authService.LoginAsync(user, pass);
-            if (loggedInUser != null)
+            btnLogin.Enabled = false;
+            btnLogin.Text = "SIGNING IN...";
+
+            try
             {
-                this.Hide();
-                if (loggedInUser.Role == "Admin" || loggedInUser.Role == "SuperAdmin")
+                var loggedInUser = await _authService.LoginAsync(user, pass);
+                if (loggedInUser != null)
                 {
-                    // Admin UI is in a different project usually, 
-                    // but for now let's assume we can launch it or show a message
-                    MessageBox.Show("Welcome Admin! Please use the FrontDeskApp.");
-                    // In a multi-project setup, you'd usually have one app or different executables.
+                    this.Hide();
+                    if (loggedInUser.Role == "Admin")
+                    {
+                        MessageBox.Show("Please use the FrontDeskApp for admin access.");
+                        this.Close();
+                        return;
+                    }
+                    else
+                    {
+                        var dashboard = new UserDashboardForm(loggedInUser);
+                        dashboard.Show();
+                    }
                 }
                 else
                 {
-                    var dashboard = new UserDashboardForm(loggedInUser);
-                    dashboard.Show();
+                    MessageBox.Show("Invalid credentials.");
                 }
             }
-            else
+            finally
             {
-                MessageBox.Show("Invalid credentials.");
+                btnLogin.Enabled = true;
+                btnLogin.Text = "SIGN IN";
             }
         }
 

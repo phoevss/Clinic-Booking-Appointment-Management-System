@@ -10,92 +10,161 @@ namespace FrontDeskApp.Forms
 {
     public partial class AdminLoginForm : Form
     {
+        private readonly BookingDbContext _context;
         private readonly IAuthService _authService;
+        private Panel cardPanel;
         private TextBox txtUsername;
         private TextBox txtPassword;
         private Button btnLogin;
 
         public AdminLoginForm()
         {
-            var context = new BookingDbContext();
-            _authService = new AuthService(context);
-            
+            _context = new BookingDbContext();
+            _authService = new AuthService(_context);
             InitializeComponent();
-            ApplyStyles();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _context?.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
-            this.txtUsername = new TextBox();
-            this.txtPassword = new TextBox();
-            this.btnLogin = new Button();
-            
-            this.SuspendLayout();
-            
-            // txtUsername
-            this.txtUsername.Location = new Point(50, 80);
-            this.txtUsername.Size = new Size(200, 25);
-            this.txtUsername.PlaceholderText = "Admin Username";
-            
-            // txtPassword
-            this.txtPassword.Location = new Point(50, 120);
-            this.txtPassword.Size = new Size(200, 25);
-            this.txtPassword.PasswordChar = '*';
-            this.txtPassword.PlaceholderText = "Password";
-            
-            // btnLogin
-            this.btnLogin.Location = new Point(50, 170);
-            this.btnLogin.Size = new Size(200, 40);
-            this.btnLogin.Text = "ADMIN LOGIN";
-            this.btnLogin.Click += new EventHandler(this.btnLogin_Click);
-
-            // AdminLoginForm
-            this.ClientSize = new Size(300, 300);
-            this.Controls.Add(this.txtUsername);
-            this.Controls.Add(this.txtPassword);
-            this.Controls.Add(this.btnLogin);
+            this.BackColor = UIHelper.BodyBg;
+            this.ClientSize = new Size(420, 520);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.Text = "FrontDesk - Admin Login";
-            this.ResumeLayout(false);
-            this.PerformLayout();
-        }
+            this.Text = "Clinic Management - Admin Login";
+            this.MaximizeBox = false;
 
-        private void ApplyStyles()
-        {
-            this.BackColor = Color.FromArgb(45, 45, 48);
-            UIHelper.SetGradientBackground(this, Color.FromArgb(50, 50, 50), Color.FromArgb(30, 30, 30));
-            
-            btnLogin.BackColor = Color.FromArgb(0, 122, 204);
-            btnLogin.ForeColor = Color.White;
-            btnLogin.FlatStyle = FlatStyle.Flat;
-            btnLogin.FlatAppearance.BorderSize = 0;
-            btnLogin.Font = new Font("Segoe UI", 10, FontStyle.Bold);
-            
-            txtUsername.BackColor = Color.FromArgb(60, 60, 60);
-            txtUsername.ForeColor = Color.White;
-            txtUsername.BorderStyle = BorderStyle.FixedSingle;
-            
-            txtPassword.BackColor = Color.FromArgb(60, 60, 60);
-            txtPassword.ForeColor = Color.White;
-            txtPassword.BorderStyle = BorderStyle.FixedSingle;
+            // Clinic branding header area
+            Panel headerBar = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 80,
+                BackColor = UIHelper.Teal
+            };
+            Label clinicName = new Label
+            {
+                Text = "✦ Clinic Management",
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            headerBar.Controls.Add(clinicName);
+
+            // Card panel for login form
+            cardPanel = new Panel
+            {
+                Size = new Size(340, 320),
+                Location = new Point((this.ClientSize.Width - 340) / 2, 110),
+                BackColor = UIHelper.CardBg,
+                BorderStyle = BorderStyle.None
+            };
+            UIHelper.MakeRounded(cardPanel, 8);
+            UIHelper.ApplyCardStyle(cardPanel);
+
+            // Subtitle
+            Label lblSub = new Label
+            {
+                Text = "Admin Sign In",
+                ForeColor = UIHelper.Charcoal,
+                Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                Location = new Point(30, 20),
+                Size = new Size(280, 40)
+            };
+            cardPanel.Controls.Add(lblSub);
+
+            Label lblHint = new Label
+            {
+                Text = "Enter your credentials to access the admin panel",
+                ForeColor = UIHelper.TextGray,
+                Font = new Font("Segoe UI", 9),
+                Location = new Point(30, 55),
+                Size = new Size(280, 20)
+            };
+            cardPanel.Controls.Add(lblHint);
+
+            // Username
+            Label lblUser = UIHelper.MakeLabel("Username");
+            lblUser.Location = new Point(30, 90);
+            cardPanel.Controls.Add(lblUser);
+
+            txtUsername = new TextBox
+            {
+                Location = new Point(30, 110),
+                Size = new Size(280, 30),
+                PlaceholderText = "admin"
+            };
+            UIHelper.ApplyInputStyle(txtUsername);
+            cardPanel.Controls.Add(txtUsername);
+
+            // Password
+            Label lblPass = UIHelper.MakeLabel("Password");
+            lblPass.Location = new Point(30, 155);
+            cardPanel.Controls.Add(lblPass);
+
+            txtPassword = new TextBox
+            {
+                Location = new Point(30, 175),
+                Size = new Size(280, 30),
+                PasswordChar = '*',
+                PlaceholderText = "••••••"
+            };
+            UIHelper.ApplyInputStyle(txtPassword);
+            cardPanel.Controls.Add(txtPassword);
+
+            // Login button
+            btnLogin = new Button
+            {
+                Text = "SIGN IN",
+                Location = new Point(30, 230),
+                Size = new Size(280, 45)
+            };
+            UIHelper.ApplyPrimaryBtn(btnLogin);
+            btnLogin.Click += btnLogin_Click;
+            cardPanel.Controls.Add(btnLogin);
+
+            this.Controls.Add(cardPanel);
+            this.Controls.Add(headerBar);
         }
 
         private async void btnLogin_Click(object sender, EventArgs e)
         {
-            string user = txtUsername.Text;
-            string pass = txtPassword.Text;
+            try
+            {
+                btnLogin.Enabled = false;
+                btnLogin.Text = "SIGNING IN...";
 
-            var loggedInUser = await _authService.LoginAsync(user, pass);
-            if (loggedInUser != null && (loggedInUser.Role == "Admin" || loggedInUser.Role == "SuperAdmin"))
-            {
-                this.Hide();
-                var dashboard = new AdminDashboardForm(loggedInUser);
-                dashboard.Show();
+                string user = txtUsername.Text;
+                string pass = txtPassword.Text;
+
+                var loggedInUser = await _authService.LoginAsync(user, pass);
+                if (loggedInUser != null && loggedInUser.Role == "Admin")
+                {
+                    this.Hide();
+                    var dashboard = new AdminDashboardForm(loggedInUser);
+                    dashboard.Show();
+                }
+                else
+                {
+                    MessageBox.Show("Access Denied: Invalid credentials or insufficient permissions.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Access Denied: Invalid credentials or insufficient permissions.");
+                MessageBox.Show($"Login error: {ex.Message}");
+            }
+            finally
+            {
+                btnLogin.Enabled = true;
+                btnLogin.Text = "SIGN IN";
             }
         }
     }

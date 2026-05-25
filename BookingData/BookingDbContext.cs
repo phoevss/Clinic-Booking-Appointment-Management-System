@@ -13,7 +13,13 @@ namespace BookingData
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Data Source=booking.db");
+            var assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            var solutionDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(assemblyPath, "..\\..\\..\\..\\..\\"));
+            var dbPath = System.IO.Path.Combine(solutionDir, "booking.db");
+            System.IO.File.AppendAllText(
+                System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "booking_debug.log"),
+                $"{DateTime.Now:HH:mm:ss.fff}: assemblyPath={assemblyPath}, solutionDir={solutionDir}, dbPath={dbPath}\n");
+            optionsBuilder.UseSqlite($"Data Source={dbPath}");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
